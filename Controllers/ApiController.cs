@@ -4,7 +4,7 @@ using OlympicMedals.Models;
 
 namespace CountryApi.Controllers
 {
-    [ApiController, Route("[controller]/word")]
+    [ApiController, Route("[controller]/country")]
     public class ApiController : ControllerBase
     {
         private DataContext _dataContext;
