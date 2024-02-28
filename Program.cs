@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using OlympicMedals.Models;
+using Medals.Hubs;
 
 // Connection info stored in appsettings.json
 IConfiguration configuration = new ConfigurationBuilder()
@@ -17,15 +18,19 @@ builder.Services.AddDbContext<DataContext>(options => options.UseSqlite(configur
 // Add services to the container.
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(name: "Open",
+    options.AddPolicy(name: "Hubs",
         builder =>
         {
             builder
-                .AllowAnyOrigin()
                 .AllowAnyMethod()
-                .AllowAnyHeader();
+                .AllowAnyHeader()
+                // Anonymous origins NOT allowed for web sockets
+                .WithOrigins("http://localhost:3000","https://kbauer17.github.io")
+                .AllowCredentials();
         });
 });
+
+builder.Services.AddSignalR();
 
 builder.Services.AddControllers().AddNewtonsoftJson();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -50,14 +55,21 @@ var app = builder.Build();
     app.UseSwaggerUI();
 // }
 
-app.UseCors("Open");
+app.UseCors("Hubs");
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
 app.UseHttpsRedirection();
 
+app.UseRouting();
+app.UseCors();
+
 app.UseAuthorization();
 
-app.MapControllers();
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers();
+    endpoints.MapHub<MedalsHub>("/medalsHub");
+});
 
 app.Run();
