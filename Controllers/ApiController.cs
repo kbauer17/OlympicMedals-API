@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using OlympicMedals.Models;
 using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.AspNetCore.SignalR;
+using Medals.Hubs;
 
 namespace CountryApi.Controllers
 {
@@ -10,9 +12,11 @@ namespace CountryApi.Controllers
     {
         private DataContext _dataContext;
 
-        public ApiController(DataContext db)
+        private readonly IHubContext<MedalsHub> _hubContext;
+        public ApiController(DataContext db, IHubContext<MedalsHub> hubContext)
         {
             _dataContext = db;
+            _hubContext = hubContext;
         }
         // http get entire collection
         [HttpGet, SwaggerOperation(summary: "returns all countries", null)]
@@ -31,6 +35,7 @@ namespace CountryApi.Controllers
         public async Task<ActionResult<Country>> Post([FromBody] Country country) {
             _dataContext.Add(country);
             await _dataContext.SaveChangesAsync();
+            await _hubContext.Clients.All.SendAsync("ReceiveAddMessage", country);
             return country;
         }
         // http delete member from collection
@@ -42,6 +47,7 @@ namespace CountryApi.Controllers
             }
             _dataContext.Remove(country);
             await _dataContext.SaveChangesAsync();
+            await _hubContext.Clients.All.SendAsync("ReceiveDeleteMessage", id);
             return NoContent();
         }
 
@@ -55,6 +61,7 @@ namespace CountryApi.Controllers
             }
             patch.ApplyTo(country);
             await  _dataContext.SaveChangesAsync();
+            await _hubContext.Clients.All.SendAsync("ReceivePatchMessage", country);
             return NoContent();
         }
     }
