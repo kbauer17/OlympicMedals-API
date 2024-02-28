@@ -62,7 +62,7 @@ app.UseStaticFiles();
 app.UseHttpsRedirection();
 
 app.UseRouting();
-app.UseCors();
+// app.UseCors();
 
 app.UseAuthorization();
 
